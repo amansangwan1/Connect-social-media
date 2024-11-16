@@ -1,9 +1,68 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { UserContext } from "../App";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import SettingsPanel from "../components/settings.component";
+
+export const profileDataStructure = {
+  personal_info: {
+    fullname: "",
+    username: "",
+    profile_img: "",
+    bio: "",
+  },
+  account_info: {
+    total_posts: 0,
+    total_followers: 0,
+    total_following: 0,
+  },
+};
 
 function ProfilePage() {
-  const [selectPosts, setSelectPosts] = useState(true);
-  const [selectReels, setSelectReels] = useState(false);
-  const [selectSaved, setSelectSaved] = useState(false);
+  let [selectPosts, setSelectPosts] = useState(true);
+  let [selectReels, setSelectReels] = useState(false);
+  let [selectSaved, setSelectSaved] = useState(false);
+  let [settingsNavPanel, setSettingsNavPanel] = useState(false);
+  let { id: profileId } = useParams();
+  let [profile, setProfile] = useState(profileDataStructure);
+  let [profileLoaded, setProfileLoaded] = useState(false);
+
+  let {
+    personal_info: { fullname, username: profile_username, profile_img, bio },
+    account_info: { total_posts, total_followers, total_following },
+  } = profile;
+
+  let {
+    userAuth: { username },
+  } = useContext(UserContext);
+
+  const fetchUserProfile = () => {
+    axios
+      .post(import.meta.env.VITE_SERVER_DOMAIN + "/get-profile", {
+        username: profileId,
+      })
+      .then(({ data: user }) => {
+        setProfile(user);
+        setProfileLoaded(true);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  useEffect(() => {
+    fetchUserProfile();
+    if (profileLoaded) {
+      resetState();
+    }
+  }, [profileId]);
+
+  const resetState = () => {
+    setSelectPosts(true);
+    setSelectReels(false);
+    setSelectSaved(false);
+    setProfile(profileDataStructure);
+  };
 
   const handlePostsSelect = () => {
     setSelectPosts(true);
@@ -21,6 +80,16 @@ function ProfilePage() {
     setSelectPosts(false);
     setSelectReels(false);
     setSelectSaved(true);
+  };
+
+  const handleSettingsPanel = () => {
+    setSettingsNavPanel((currentVal) => !currentVal);
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      setSettingsNavPanel(false);
+    }, 200);
   };
 
   return (
@@ -48,11 +117,12 @@ function ProfilePage() {
         >
           <div style={{ height: "150px", width: "150px" }}>
             <img
-              src="https://imgs.search.brave.com/V75w2A2FCSCtt4jgIe476J3zsJuKYmqK7u1OLlEwe44/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzLzM5LzYy/L2I3LzM5NjJiN2E5/NmY1NmZjYmMzZTk0/NTlhMTEwYmYxNTZk/LmpwZw"
+              src={profile_img}
               style={{
                 borderRadius: 100,
                 border: "2px solid black",
               }}
+              referrerPolicy="no-referrer"
             />
           </div>
         </div>
@@ -68,9 +138,12 @@ function ProfilePage() {
               fontWeight: "500",
             }}
           >
-            <h1 style={{ fontSize: 18 }}>userName</h1>
+            <h1 style={{ fontSize: 18 }}>{profile_username}</h1>
+
             <button
+              className={profile_username == username ? "" : " hidden"}
               style={{
+                whiteSpace: "nowrap",
                 backgroundColor: "#424242",
                 marginLeft: "15px",
                 paddingLeft: "15px",
@@ -85,12 +158,19 @@ function ProfilePage() {
             >
               <h1>Edit Profile</h1>
             </button>
-            <button>
-              <i
-                className="fi fi-sr-settings mt-1"
-                style={{ marginLeft: "400px" }}
-              ></i>
-            </button>
+            <div
+              className="relative"
+              onClick={handleSettingsPanel}
+              onBlur={handleBlur}
+            >
+              <button>
+                <i
+                  className="fi fi-sr-settings mt-1"
+                  style={{ marginLeft: "400px" }}
+                ></i>
+              </button>
+              {settingsNavPanel ? <SettingsPanel></SettingsPanel> : ""}
+            </div>
           </div>
 
           <div
@@ -102,9 +182,9 @@ function ProfilePage() {
               fontWeight: 500,
             }}
           >
-            <h1> X posts </h1>
-            <h1 style={{ marginLeft: "20px" }}> Y followers</h1>
-            <h1 style={{ marginLeft: "20px" }}> Z following</h1>
+            <h1> {total_posts} posts </h1>
+            <h1 style={{ marginLeft: "20px" }}> {total_followers} followers</h1>
+            <h1 style={{ marginLeft: "20px" }}> {total_following} following</h1>
           </div>
 
           <h1
@@ -115,7 +195,7 @@ function ProfilePage() {
               marginTop: "18px",
             }}
           >
-            NAME
+            {fullname}
           </h1>
 
           <div
@@ -134,7 +214,7 @@ function ProfilePage() {
                 fontSize: 12,
               }}
             >
-              BIO...............................................................................................................................................................................................................................................................................................
+              {bio}
             </p>
           </div>
         </div>
@@ -180,16 +260,15 @@ function ProfilePage() {
             <h1 style={{ marginLeft: "7px" }}>REELS</h1>
           </button>
           <button
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              borderTop: selectSaved ? "2px solid white" : "none",
-              height: "50px",
-              alignItems: "center",
-            }}
+            className={
+              (profile_username == username ? "" : " hidden") +
+              " flex flex-row " +
+              (selectSaved ? " border-t-2 border-white " : "") +
+              " h-[50px] items-center"
+            }
             onClick={handleSavedSelect}
           >
-            <i className="fi fi-rr-bookmark"></i>
+            <i className={"fi fi-rr-bookmark "}></i>
             <h1 style={{ marginLeft: "7px" }}>SAVED</h1>
           </button>
         </div>

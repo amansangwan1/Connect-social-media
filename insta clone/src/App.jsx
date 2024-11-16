@@ -7,27 +7,34 @@ import UserAuthForm from "./pages/userAuthForm.page";
 import ProfilePage from "./pages/ProfilePage";
 import { lookInSession } from "./common/session";
 
-
-export const UserContext = createContext({})
+export const UserContext = createContext({});
 const App = () => {
-    const [userAuth, setUserAuth] = useState({});
+  const [userAuth, setUserAuth] = useState({});
 
-    useEffect(() => {
-        let userInSession = lookInSession("user");
-        userInSession ? setUserAuth(JSON.parse(userInSession)) : setUserAuth({accessToken: null});
-    }, [])
+  useEffect(() => {
+    let userInSession = lookInSession("user");
+    userInSession
+      ? setUserAuth(JSON.parse(userInSession))
+      : setUserAuth({ accessToken: null });
+  }, []);
 
-    return (
-        <UserContext.Provider value={{userAuth, setUserAuth}}>
-            <Routes>
-              <Route path="/" element={<Navbar />}>
-                <Route index element={<HomePage />} />
-                <Route path="profile" element={<ProfilePage />} />
-              </Route>
-              <Route path="/signin" element={<UserAuthForm type="sign-in"></UserAuthForm>}></Route>
-              <Route path="/signup" element={<UserAuthForm type="sign-up"></UserAuthForm>}></Route>
-            </Routes>
-        </UserContext.Provider>
+  return (
+    <UserContext.Provider value={{ userAuth, setUserAuth }}>
+      <Routes>
+        <Route path="/" element={<Navbar />}>
+          <Route index element={<HomePage />} />
+          <Route path="profile/:id" element={<ProfilePage />} />
+        </Route>
+        <Route
+          path="/signin"
+          element={<UserAuthForm type="sign-in"></UserAuthForm>}
+        ></Route>
+        <Route
+          path="/signup"
+          element={<UserAuthForm type="sign-up"></UserAuthForm>}
+        ></Route>
+      </Routes>
+    </UserContext.Provider>
   );
 };
 
