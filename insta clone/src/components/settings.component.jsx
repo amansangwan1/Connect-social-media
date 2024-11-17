@@ -12,12 +12,9 @@ const SettingsPanel = () => {
   const navigate = useNavigate();
 
   const signOutUser = () => {
-    console.log('1st')
     removeFromSession("user");
     setUserAuth({ access_token: null });
-    console.log("2nd")
     navigate("/signin");
-    console.log('3rd')
   };
 
   return (
@@ -28,7 +25,7 @@ const SettingsPanel = () => {
       <div className="bg-black absolute right-0 border border-grey w-60 overflow-hidden duration-200">
         <span className="absolute border-t border-grey w-[100%]"></span>
         <button
-          className="text-left p-4 hover:bg-grey w-full pl-8 py-4 "
+          className="text-left p-4 hover:bg-grey w-full pl-8 py-4"
           onClick={signOutUser}
         >
           <h1 className="font-bold text-xl mg-1">Sign Out</h1>

@@ -19,9 +19,7 @@ export const profileDataStructure = {
 };
 
 function ProfilePage() {
-  let [selectPosts, setSelectPosts] = useState(true);
-  let [selectReels, setSelectReels] = useState(false);
-  let [selectSaved, setSelectSaved] = useState(false);
+  let [selectedNavbarButton, setSelectedNavbarButton] = useState("");
   let [settingsNavPanel, setSettingsNavPanel] = useState(false);
   let { id: profileId } = useParams();
   let [profile, setProfile] = useState(profileDataStructure);
@@ -64,22 +62,16 @@ function ProfilePage() {
     setProfile(profileDataStructure);
   };
 
-  const handlePostsSelect = () => {
-    setSelectPosts(true);
-    setSelectReels(false);
-    setSelectSaved(false);
+  const handleSelectedNavbarButton = (buttonName) => {
+    setSelectedNavbarButton(buttonName);
   };
 
-  const handleReelsSelect = () => {
-    setSelectPosts(false);
-    setSelectReels(true);
-    setSelectSaved(false);
-  };
-
-  const handleSavedSelect = () => {
-    setSelectPosts(false);
-    setSelectReels(false);
-    setSelectSaved(true);
+  const profileNavbar = {
+    display: "flex",
+    flexDirection: "row",
+    height: "50px",
+    alignItems: "center",
+    margin: "30px",
   };
 
   const handleSettingsPanel = () => {
@@ -91,6 +83,21 @@ function ProfilePage() {
       setSettingsNavPanel(false);
     }, 200);
   };
+
+  let profileNavbarButtons = [
+    {
+      buttonImage: "fi fi-rr-grid",
+      buttonName: "POSTS",
+    },
+    {
+      buttonImage: "fi fi-tr-films",
+      buttonName: "REELS",
+    },
+    {
+      buttonImage: "fi fi-rr-bookmark",
+      buttonName: "SAVED",
+    },
+  ];
 
   return (
     <div>
@@ -224,7 +231,6 @@ function ProfilePage() {
         <div
           style={{
             height: "50px",
-            width: "300px",
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-between",
@@ -233,44 +239,22 @@ function ProfilePage() {
             fontSize: 13,
           }}
         >
-          <button
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              borderTop: selectPosts ? "2px solid white" : "none",
-              height: "50px",
-              alignItems: "center",
-            }}
-            onClick={handlePostsSelect}
-          >
-            <i className="fi fi-rr-grid"></i>
-            <h1 style={{ marginLeft: "7px" }}>POSTS</h1>
-          </button>
-          <button
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              borderTop: selectReels ? "2px solid white" : "none",
-              height: "50px",
-              alignItems: "center",
-            }}
-            onClick={handleReelsSelect}
-          >
-            <i className="fi fi-tr-films"></i>
-            <h1 style={{ marginLeft: "7px" }}>REELS</h1>
-          </button>
-          <button
-            className={
-              (profile_username == username ? "" : " hidden") +
-              " flex flex-row " +
-              (selectSaved ? " border-t-2 border-white " : "") +
-              " h-[50px] items-center"
-            }
-            onClick={handleSavedSelect}
-          >
-            <i className={"fi fi-rr-bookmark "}></i>
-            <h1 style={{ marginLeft: "7px" }}>SAVED</h1>
-          </button>
+          {profileNavbarButtons.map((elements) => (
+            <button
+              key={elements.buttonName}
+              onClick={() => handleSelectedNavbarButton(elements.buttonName)}
+              style={{
+                ...profileNavbar,
+                borderTop:
+                  selectedNavbarButton === elements.buttonName
+                    ? "2px solid white"
+                    : "none",
+              }}
+            >
+              <i className={`${elements.buttonImage}`}></i>
+              <h1 style={{ marginLeft: "7px" }}>{elements.buttonName}</h1>
+            </button>
+          ))}
         </div>
       </div>
     </div>

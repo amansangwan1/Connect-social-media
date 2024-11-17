@@ -6,12 +6,12 @@ import { nanoid } from "nanoid";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import admin from "firebase-admin";
-import serviceAccount from './connect-9a106-firebase-adminsdk-sq6sb-2369ad3542.json' assert { type: "json" };
+import serviceAccount from "./instagram-clone-59a5e-firebase-adminsdk-hmh6t-4869929c6e.json" assert { type: "json" };
 import { getAuth } from "firebase-admin/auth";
-// import aws from "aws-sdk";
+import aws from "aws-sdk";
 
 import User from "./Schema/User.js";
-// import Post from "./Schema/Post.js";
+import Post from "./Schema/Post.js";
 
 const server = express();
 server.use(express.json());
@@ -27,47 +27,47 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-// const s3 = new aws.S3({
-//   accessKeyId: process.env.AWS_ACCESS_KEY,
-//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-//   region: "ap-south-1",
-// });
+const s3 = new aws.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: "ap-south-1",
+});
 
-// const generateUploadUrl = async () => {
-//   const date = new Date();
-//   const imageName = `${nanoid()}-${date.getTime}.jpeg`;
-//   return await s3.getSignedUrlPromise("putObject", {
-//     Bucket: "instagram-clone-project-bucket",
-//     Key: imageName,
-//     Expires: 60 * 60, // 1 hour
-//     ContentType: "image/jpeg",
-//   });
-// };
+const generateUploadUrl = async () => {
+  const date = new Date();
+  const imageName = `${nanoid()}-${date.getTime}.jpeg`;
+  return await s3.getSignedUrlPromise("putObject", {
+    Bucket: "instagram-clone-project-bucket",
+    Key: imageName,
+    Expires: 60 * 60, // 1 hour
+    ContentType: "image/jpeg",
+  });
+};
 
-// const verifyJwt = (req, res, next) => {
-//   const token = req.headers.authorization?.split(" ")[1];
-//   if (!token) {
-//     return res.status(401).json({ error: "No token provided" });
-//   }
-//   jwt.verify(token, process.env.SECRET_ACCESS_KEY, (err, user) => {
-//     if (err) {
-//       return res.status(403).json({ error: "Invalid token" });
-//     }
-//     req.user = user.id;
-//     next();
-//   });
-// };
+const verifyJwt = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+  jwt.verify(token, process.env.SECRET_ACCESS_KEY, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: "Invalid token" });
+    }
+    req.user = user.id;
+    next();
+  });
+};
 
-// server.get("/get-upload-url", (req, res) => {
-//   generateUploadUrl()
-//     .then((url) => {
-//       return res.status(200).json({ uploadUrl: url });
-//     })
-//     .catch((err) => {
-//       console.log(err.message);
-//       return res.status(500).json({ error: "Failed to generate upload URL" });
-//     });
-// });
+server.get("/get-upload-url", (req, res) => {
+  generateUploadUrl()
+    .then((url) => {
+      return res.status(200).json({ uploadUrl: url });
+    })
+    .catch((err) => {
+      console.log(err.message);
+      return res.status(500).json({ error: "Failed to generate upload URL" });
+    });
+});
 
 const formatDatatoSend = (user) => {
   const accessToken = jwt.sign({ id: user._id }, process.env.SECRET_ACCESS_KEY);
@@ -239,50 +239,104 @@ server.post("/get-profile", (req, res) => {
     });
 });
 
-// server.post("/post", verifyJwt, (req, res) => {
-//   let userId = req.user;
+server.post("/post", verifyJwt, (req, res) => {
+  let userId = req.user;
 
-//   let { des, likes_hide, comment_hide, link } = req.body;
-//   if (!des.length) {
-//     return res.status(403).json({ error: "Description is required" });
-//   }
-//   if (!link.length) {
-//     return res.status(403).json({ error: "Link is required" });
-//   }
-//   let post_id = Math.floor(Math.random() * 1000000000000);
-//   let posts = new Post({
-//     des,
-//     likes_hide,
-//     comment_hide,
-//     link,
-//     post_id,
-//   });
+  let { des, likes_hide, comment_hide, link } = req.body;
+  if (!des.length) {
+    return res.status(403).json({ error: "Description is required" });
+  }
+  if (!link.length) {
+    return res.status(403).json({ error: "Link is required" });
+  }
+  let post_id = Math.floor(Math.random() * 1000000000000);
+  let posts = new Post({
+    des,
+    likes_hide,
+    comment_hide,
+    link,
+    post_id,
+    author: userId,
+  });
 
-//   posts
-//     .save()
-//     .then((post) => {
-//       let incrementVal = 1;
-//       User.findByIdAndUpdate(userId, {
-//         $inc: { "account_info.total_posts": incrementVal },
-//         $push: { posts: post._id },
-//       })
-//         .then((user) => {
-//           return res.status(200).json({ id: posts.post_id });
-//         })
-//         .catch((err) => {
-//           console.log(err.message);
-//           return res
-//             .status(500)
-//             .json({ error: "failed to upload total posts number" });
-//         });
-//     })
-//     .catch((err) => {
-//       console.log(err.message);
-//       return res
-//         .status(500)
-//         .json({ error: "error occured while creating post" });
-//     });
-// });
+  posts
+    .save()
+    .then((post) => {
+      let incrementVal = 1;
+      User.findByIdAndUpdate(userId, {
+        $inc: { "account_info.total_posts": incrementVal },
+        $push: { posts: post._id },
+      })
+        .then((user) => {
+          return res.status(200).json({ id: posts.post_id });
+        })
+        .catch((err) => {
+          console.log(err.message);
+          return res
+            .status(500)
+            .json({ error: "failed to upload total posts number" });
+        });
+    })
+    .catch((err) => {
+      console.log(err.message);
+      return res
+        .status(500)
+        .json({ error: "error occured while creating post" });
+    });
+});
+
+server.post("/latest-posts", (req, res) => {
+  let { page } = req.body;
+  let maxLimit = 5;
+  Post.find()
+    .populate(
+      "author",
+      "personal_info.fullname personal_info.profile_img personal_info.username -_id"
+    )
+    .sort({ publishedAt: -1 })
+    .skip((page - 1) * maxLimit)
+    .select(
+      "post_id des activity.total_likes activity_total_comments activity.total_views link comments likes_hide comment_hide"
+    )
+    .limit(maxLimit)
+    .then((post) => {
+      return res.status(200).json({ post });
+    })
+    .catch((err) => {
+      console.log(err.message);
+      return res
+        .status(500)
+        .json({ error: "error occured while fetching latest posts" });
+    });
+});
+
+server.post("/all-latest-posts-count", (req, res) => {
+  Post.countDocuments()
+    .then((count) => {
+      return res.status(200).json({ totalDocs: count });
+    })
+    .catch((err) => {
+      console.log(err.message);
+      return res
+        .status(500)
+        .json({ error: "error occured while fetching total posts" });
+    });
+});
+
+server.post("/like", (req, res) => {
+  let { post_id, val } = req.body;
+  console.log(post_id);
+  Post.findByIdAndUpdate(post_id, { $inc: { "activity.total_likes": val } })
+    // Post.findOne({post_id})
+    .then((post) => {
+      console.log(post);
+      return res.status(200).json({ likes: post.activity.total_likes });
+    })
+    .catch((err) => {
+      console.log(err.message);
+      return res.status(500).json({ error: "error occured while liking post" });
+    });
+});
 
 let port = 3000;
 server.listen(port, () => {
